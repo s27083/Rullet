@@ -25,8 +25,27 @@ body {
 }
 
 h1 {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     color: #333;
+}
+
+.last-number-container {
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border-left: 5px solid #4CAF50;
+}
+
+.last-number-container h2 {
+    font-size: 20px;
+    color: #333;
+}
+
+#lastSelectedNumber {
+    color: #4CAF50;
+    font-size: 24px;
+    font-weight: bold;
 }
 
 .roulette-container {

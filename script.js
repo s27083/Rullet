@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const wheel = document.getElementById('wheel');
     const spinButton = document.getElementById('spinButton');
     const selectedNumberElement = document.getElementById('selectedNumber');
+    const lastSelectedNumberElement = document.getElementById('lastSelectedNumber');
     
     let isSpinning = false;
     
@@ -18,6 +19,55 @@ document.addEventListener('DOMContentLoaded', function() {
         centerNumber.id = 'centerNumber';
         centerNumber.textContent = '';
         wheel.appendChild(centerNumber);
+        
+        // Wczytaj ostatnio wylosowaną liczbę z localStorage
+        const lastNumber = localStorage.getItem('lastNumber');
+        if (lastNumber) {
+            lastSelectedNumberElement.textContent = lastNumber;
+        }
+        
+        // Sprawdzenie ograniczenia czasowego
+        checkTimeLimitation();
+    }
+    
+    // Sprawdza ograniczenie czasowe (raz na godzinę)
+    function checkTimeLimitation() {
+        const lastSpinTime = localStorage.getItem('lastSpinTime');
+        
+        if (lastSpinTime) {
+            const currentTime = new Date().getTime();
+            const timeDifference = currentTime - parseInt(lastSpinTime);
+            const oneHour = 60 * 60 * 1000; // milisekundy w godzinie
+            
+            if (timeDifference < oneHour) {
+                // Nie minęła jeszcze godzina
+                const remainingTime = oneHour - timeDifference;
+                const remainingMinutes = Math.floor(remainingTime / (60 * 1000));
+                const remainingSeconds = Math.floor((remainingTime % (60 * 1000)) / 1000);
+                
+                spinButton.disabled = true;
+                spinButton.textContent = `Czekaj ${remainingMinutes}m ${remainingSeconds}s`;
+                
+                // Aktualizacja czasu oczekiwania co sekundę
+                const timerInterval = setInterval(() => {
+                    const currentTime = new Date().getTime();
+                    const timeDifference = currentTime - parseInt(lastSpinTime);
+                    
+                    if (timeDifference >= oneHour) {
+                        // Minęła godzina, można losować ponownie
+                        clearInterval(timerInterval);
+                        spinButton.disabled = false;
+                        spinButton.textContent = 'Zakręć Ruletką';
+                    } else {
+                        // Aktualizacja czasu pozostałego
+                        const remainingTime = oneHour - timeDifference;
+                        const remainingMinutes = Math.floor(remainingTime / (60 * 1000));
+                        const remainingSeconds = Math.floor((remainingTime % (60 * 1000)) / 1000);
+                        spinButton.textContent = `Czekaj ${remainingMinutes}m ${remainingSeconds}s`;
+                    }
+                }, 1000);
+            }
+        }
     }
     
     // Losowanie liczby i obracanie koła
@@ -57,10 +107,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 centerNumber.textContent = selectedNumber;
                 selectedNumberElement.textContent = selectedNumber;
                 
-                // Odblokowujemy przycisk po zakończeniu animacji
+                // Zapisanie wylosowanej liczby
+                localStorage.setItem('lastNumber', selectedNumber.toString());
+                lastSelectedNumberElement.textContent = selectedNumber;
+                
+                // Zapisanie czasu ostatniego losowania
+                localStorage.setItem('lastSpinTime', new Date().getTime().toString());
+                
+                // Odblokowujemy przycisk po zakończeniu animacji, ale informujemy o ograniczeniu
                 setTimeout(() => {
                     isSpinning = false;
-                    spinButton.disabled = false;
+                    spinButton.disabled = true;
+                    spinButton.textContent = 'Czekaj 60m 0s';
+                    
+                    // Rozpocznij odliczanie czasu
+                    checkTimeLimitation();
                 }, 500);
             }
         }, spinInterval);
