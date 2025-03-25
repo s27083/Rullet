@@ -1,63 +1,79 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const wheel = document.querySelector('.wheel');
-    const numberContainer = document.querySelector('.number-container');
+document.addEventListener('DOMContentLoaded', function() {
+    const MIN_NUMBER = 3;
+    const MAX_NUMBER = 150;
+    const wheel = document.getElementById('wheel');
     const spinButton = document.getElementById('spinButton');
     const selectedNumberElement = document.getElementById('selectedNumber');
     
-    // Liczby na ruletce (0-36)
-    const numbers = Array.from({length: 37}, (_, i) => i);
-    
-    // Tworzenie segmentów ruletki
-    numbers.forEach((number, index) => {
-        const segment = document.createElement('div');
-        segment.className = 'number';
-        segment.textContent = number;
-        
-        // Obliczanie kąta dla każdego segmentu
-        const angle = (index * 360) / numbers.length;
-        segment.style.transform = `rotate(${angle}deg)`;
-        
-        // Ustawianie koloru tła
-        if (number === 0) {
-            segment.style.backgroundColor = '#008000'; // zielony dla zera
-        } else if (number % 2 === 0) {
-            segment.style.backgroundColor = '#000000'; // czarny dla parzystych
-        } else {
-            segment.style.backgroundColor = '#ff0000'; // czerwony dla nieparzystych
-        }
-        
-        numberContainer.appendChild(segment);
-    });
-    
     let isSpinning = false;
     
-    spinButton.addEventListener('click', () => {
+    // Generowanie liczb dla ruletki
+    function initializeWheel() {
+        // Wypełniamy koło pojedynczym kolorem
+        wheel.style.backgroundColor = '#3498db';
+        
+        // Wyświetlanie bieżącej liczby podczas obrotu
+        const centerNumber = document.createElement('div');
+        centerNumber.className = 'center-number';
+        centerNumber.id = 'centerNumber';
+        centerNumber.textContent = '';
+        wheel.appendChild(centerNumber);
+    }
+    
+    // Losowanie liczby i obracanie koła
+    function spinWheel() {
         if (isSpinning) return;
         
         isSpinning = true;
         spinButton.disabled = true;
+        selectedNumberElement.textContent = '-';
         
-        // Losowy kąt obrotu (minimum 5 pełnych obrotów + losowa wartość)
-        const rotations = 5 + Math.random() * 5;
-        const degrees = rotations * 360;
+        // Losowanie liczby
+        const selectedNumber = Math.floor(Math.random() * (MAX_NUMBER - MIN_NUMBER + 1)) + MIN_NUMBER;
         
-        // Dodatkowy losowy kąt dla końcowej pozycji
-        const extraDegrees = Math.random() * 360;
-        const totalDegrees = degrees + extraDegrees;
+        // Symulacja obrotu koła poprzez animację
+        let spins = 0;
+        const totalSpins = 30; // Ilość "migotań" liczb podczas obrotu
+        let spinInterval = 50; // ms między zmianami liczb na początku
+        const centerNumber = document.getElementById('centerNumber');
         
-        // Animacja obrotu
-        wheel.style.transform = `rotate(${totalDegrees}deg)`;
-        
-        // Obliczanie wylosowanej liczby
-        setTimeout(() => {
-            const finalRotation = extraDegrees;
-            const segmentSize = 360 / numbers.length;
-            const selectedIndex = Math.floor(((360 - (finalRotation % 360)) % 360) / segmentSize);
-            const selectedNumber = numbers[selectedIndex];
+        let spinAnimation = setInterval(function() {
+            // Losowa liczba podczas animacji
+            const randomAnimNumber = Math.floor(Math.random() * (MAX_NUMBER - MIN_NUMBER + 1)) + MIN_NUMBER;
+            centerNumber.textContent = randomAnimNumber;
             
-            selectedNumberElement.textContent = selectedNumber;
-            isSpinning = false;
-            spinButton.disabled = false;
-        }, 4000);
-    });
+            spins++;
+            
+            // Stopniowe spowalnianie animacji
+            if (spins > totalSpins * 0.7) {
+                spinInterval += 10;
+                clearInterval(spinAnimation);
+                spinAnimation = setInterval(arguments.callee, spinInterval);
+            }
+            
+            // Zakończenie animacji
+            if (spins >= totalSpins) {
+                clearInterval(spinAnimation);
+                centerNumber.textContent = selectedNumber;
+                selectedNumberElement.textContent = selectedNumber;
+                
+                // Odblokowujemy przycisk po zakończeniu animacji
+                setTimeout(() => {
+                    isSpinning = false;
+                    spinButton.disabled = false;
+                }, 500);
+            }
+        }, spinInterval);
+        
+        // Animacja obrotu koła
+        wheel.style.transition = 'transform 3s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+        const rotations = Math.floor(Math.random() * 3) + 5; // 5-7 pełnych obrotów
+        wheel.style.transform = `rotate(${rotations * 360}deg)`;
+    }
+    
+    // Inicjalizacja koła
+    initializeWheel();
+    
+    // Obsługa przycisku
+    spinButton.addEventListener('click', spinWheel);
 }); 
